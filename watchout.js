@@ -11,14 +11,23 @@ var createEnemies = function() {
   })
 }
 
-
 var enemies = board.selectAll("circle").data(createEnemies, function(item) {return item.id}).enter().append("svg:circle");
 enemies.style({"r": 20, "fill": "blue"});
-enemies.attr("cx", function(enemy) {
-  return enemy.x;
-});
-enemies.attr("cy", function(enemy) {
-  return enemy.y;
-});
+
+var update = function(){
+  enemies.each(function(enemy) {
+    enemy.x = Math.random() * window.innerWidth;
+    enemy.y = Math.random() * window.innerHeight;
+  });
+  enemies.transition().attr("cx", function(enemy) {
+    return enemy.x;
+  }).attr("cy", function(enemy) {
+    return enemy.y;
+  }).duration(1000).each("end",update);
+};
+
+update();  
+
+
 
 console.log(enemies);
