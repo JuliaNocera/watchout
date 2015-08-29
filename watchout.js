@@ -1,8 +1,8 @@
 // start slingin' some d3 here.
-var board = d3.select("body").append("svg").style({'height' : window.innerHeight, 'width' : window.innerWidth});
+var board = d3.select("body").append("svg").style({'height' : window.innerHeight - 100, 'width' : window.innerWidth - 15});
 
 var createEnemies = function() {
-  return _.range(0, 5).map(function(item) {
+  return _.range(0, 25).map(function(item) {
     return {
       id: item,
       x: Math.random() * window.innerWidth,
@@ -54,14 +54,22 @@ var tweenWithCollisionDetection = function(endData) {
   }
 
   return function(t) {
+    var currentScore = d3.select(".current").select("span");
     checkCol(enemy, function() {
-      console.log("t")
+      var highScore = d3.select(".high").select("span");
+      
+      var collision = d3.select(".collisions").select("span");
       //Chech if high score is less the current score
+      if(parseInt(highScore.text()) < parseInt(currentScore.text())){
         //Set high score to current
+        highScore.text(currentScore.text());
+      }
       //Reset current score
+      currentScore.text(0);
       //collisions++
-
+      collision.text(parseInt(collision.text())+1);
     });
+
 
     enemyNexPos = {
       x: startPos.x + (endPos.x - startPos.x)*t,
@@ -94,6 +102,10 @@ var update = function(){
 
 update();  
 
+function updateScore() {
+  this.text(parseInt(this.text())+1);
+}
+
+setInterval(updateScore.bind(d3.select(".current").select("span")), 100);
 
 
-console.log(enemies);
