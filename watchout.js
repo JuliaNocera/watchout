@@ -1,111 +1,101 @@
 // start slingin' some d3 here.
-var board = d3.select("body").append("svg").style({'height' : window.innerHeight - 100, 'width' : window.innerWidth - 15});
+var board = d3.select(".board").style({'height' : window.innerHeight - 100 + "px", 'width' : window.innerWidth - 15 + "px"});
 
 var createEnemies = function() {
-  return _.range(0, 25).map(function(item) {
+  return _.range(0, 10).map(function(item) {
     return {
       id: item,
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
     }
   })
 }
 
+var pixelize = function(number) {
+  return number + "px";
+}
 
-var player = board.append("circle").attr("class", ".player");
-player.attr("cx", window.innerWidth / 2)
-player.attr("cy", window.innerHeight / 2)
-player.attr("points", "05,30 15,10 25,30")
-player.attr("r", 20);
-player.attr("fill", "red");
+
+var player = board.select(".player").style( {
+  top: pixelize(window.innerHeight / 2),
+  left: pixelize(window.innerWidth / 2),
+  "background-color": "red"
+
+});
 //console.log(d3.event.dx)
 function dragFunc(event) {
-  player.attr("cx", d3.event.dx + parseInt(player.attr("cx")));
-  player.attr("cy", d3.event.dy + parseInt(player.attr("cy")));
+  player.style({
+    "left": pixelize(d3.event.dx + parseInt(player.style("left"))),
+    "top": pixelize(d3.event.dy + parseInt(player.style("top")))
+  });
 }
 
 var drag = d3.behavior.drag().on('drag', dragFunc)
 
 player.call(drag);
 
-function checkCol(enemy, collidedCallback) {
-  var radiusSum = 20 + 20
-  var xDiff = parseFloat(enemy.attr('cx')) - parseFloat(player.attr("cx"))
-  var yDiff = parseFloat(enemy.attr('cy')) - parseFloat(player.attr("cy"))
-  var separation = Math.sqrt( Math.pow(xDiff,2) + Math.pow(yDiff,2) )
-  if(separation < radiusSum) {
-    collidedCallback(player, enemy);
-  }
 
-}
-
-
-var tweenWithCollisionDetection = function(endData) {
-  //Select current passed in eneamy
-  var enemy = d3.select(this);
-
-  var startPos = {
-    x: parseFloat(enemy.attr("cx")),
-    y: parseFloat(enemy.attr("cy")),
-  }
-  var endPos = {
-    x: endData.x,
-    y: endData.y,
-  }
-
-  return function(t) {
-    var currentScore = d3.select(".current").select("span");
-    checkCol(enemy, function() {
-      var highScore = d3.select(".high").select("span");
-      
-      var collision = d3.select(".collisions").select("span");
-      //Chech if high score is less the current score
-      if(parseInt(highScore.text()) < parseInt(currentScore.text())){
-        //Set high score to current
-        highScore.text(currentScore.text());
-      }
-      //Reset current score
-      currentScore.text(0);
-      //collisions++
-      collision.text(parseInt(collision.text())+1);
-    });
-
-
-    enemyNexPos = {
-      x: startPos.x + (endPos.x - startPos.x)*t,
-      y: startPos.y + (endPos.y - startPos.y)*t,
+var prevCol = false;
+var detectCollision = function() {
+  var collision = false;
+  var highScore = d3.select(".high").select("span");
+  var currentScore = d3.select(".current").select("span");
+  var collisionCount = d3.select(".collisions").select("span");
+  
+  enemies.each(function() {
+    var enemy = d3.select(this);
+    var radiusSum = 20 + 20
+    var xDiff = parseFloat(enemy.style('left')) - parseFloat(player.style("left"))
+    var yDiff = parseFloat(enemy.style('top')) - parseFloat(player.style("top"))
+    var separation = Math.sqrt( Math.pow(xDiff,2) + Math.pow(yDiff,2) )
+    if(separation < radiusSum) {
+      collision = true;
     }
-    if(isNaN(enemyNexPos.x) || isNaN(enemyNexPos.y)) {
-      return;
-    }
-
-    return enemy.attr("cx", enemyNexPos.x).attr("cy", enemyNexPos.y);
-
-
-  }
-}
-
-var enemies = board.selectAll("circle").filter(".enemy").data(createEnemies, function(item) {return item.id}).enter().append("svg:circle").attr("class", ".enemy");
-enemies.style({"r": 20, "fill": "blue"});
-
-var update = function(){
-  enemies.each(function(enemy) {
-    enemy.x = Math.random() * window.innerWidth;
-    enemy.y = Math.random() * window.innerHeight;
   });
-  enemies.transition().attr("cx", function(enemy) {
-    return enemy.x;
-  }).attr("cy", function(enemy) {
-    return enemy.y;
-  }).duration(1000).tween("custom", tweenWithCollisionDetection).each("end",update);
+    
+  if(collision) {
+    //Chech if high score is less the current score
+    if(parseInt(highScore.text()) < parseInt(currentScore.text())){
+      //Set high score to current
+      highScore.text(currentScore.text());
+    }
+    //Reset current score
+    currentScore.text(0);
+    if(prevCol != collision) {
+        collisionCount.text(parseInt(collisionCount.text())+1); 
+    }
+  }
+  prevCol = collision;
+}
+d3.timer(detectCollision)
+
+
+var enemies = board.selectAll(".enemy").data(createEnemies, function(item) {return item.id}).enter().append("div").attr("class", "enemy");
+
+
+var update = function(element){
+
+  element.transition().duration(2000).style({
+    left: pixelize(Math.random() * window.innerWidth),
+    top: pixelize(Math.random() * window.innerHeight),
+  }).each("end",function() {
+    update(d3.select(this));
+  });
 };
 
-update();  
+update(enemies);  
+
+
+// "top", function(enemy) {
+//     return pixelize(enemy.x);
+//   }).attr("left", function(enemy) {
+//     return pixelize(enemy.y);
+//   }
 
 function updateScore() {
   this.text(parseInt(this.text())+1);
 }
 
 setInterval(updateScore.bind(d3.select(".current").select("span")), 100);
+
+//setInterval(rotate, 1000);
 
 

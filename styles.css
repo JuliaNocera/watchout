@@ -2,6 +2,23 @@
 
 /* Note: an asteroid image is included in this repo.
 Feel free to use it if you like. */
+.scoreboard {
+  position: absolute;
+}
+.board {
+  position: relative;
+}
 .player {
-  
+  border-radius: 10px;
+  width: 20px;
+  height: 20px;
+  position: absolute;
+}
+
+.enemy {
+  position: absolute;
+  /*background-color: black;*/
+  background-image: url("zombieFace.jpg");
+  height: 26px;
+  width: 20px;
 }
